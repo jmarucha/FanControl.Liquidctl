@@ -53,5 +53,9 @@
     <Compile Include="LiquidctlPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="build-liquidctl.sh" />
+    <None Include="build-release.ps1" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

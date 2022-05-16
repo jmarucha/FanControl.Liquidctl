@@ -12,6 +12,7 @@ namespace FanControl.Liquidctl
 
         public void Initialize()
         {
+
             LiquidctlCLIWrapper.Initialize();
         }
 
