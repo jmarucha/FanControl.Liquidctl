@@ -6,7 +6,7 @@ namespace FanControl.Liquidctl
         public class StatusRecord
         {
             public string key { get; set; }
-            public float value { get; set; }
+            public float? value { get; set; }
             public string unit { get; set; }
         }
         public string bus { get; set; }

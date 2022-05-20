@@ -16,7 +16,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = output.status.Single(entry => entry.key == "Liquid temperature").value;
+                _value = (float)output.status.Single(entry => entry.key == "Liquid temperature").value;
             }
             public string Id => _id;
             string _id;
@@ -40,7 +40,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = output.status.Single(entry => entry.key == "Pump speed").value;
+                _value = (float)output.status.Single(entry => entry.key == "Pump speed").value;
             }
             public string Id => _id;
             readonly string _id;
@@ -65,7 +65,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = output.status.Single(entry => entry.key == "Pump duty").value;
+                _value = (float)output.status.Single(entry => entry.key == "Pump duty").value;
             }
             public string Id => _id;
             string _id;
@@ -95,15 +95,15 @@ namespace FanControl.Liquidctl
         {
             address = output.address;
 
-            hasPumpSpeed = output.status.Exists(entry => entry.key == "Pump duty");
+            hasPumpSpeed = output.status.Exists(entry => entry.key == "Pump duty" && !(entry.value is null));
             if (hasPumpSpeed)
                 pumpDuty = new PumpDuty(output);
 
-            hasPumpDuty = output.status.Exists(entry => entry.key == "Pump speed");
+            hasPumpDuty = output.status.Exists(entry => entry.key == "Pump speed" && !(entry.value is null));
             if (hasPumpDuty)
             pumpSpeed = new PumpSpeed(output);
 
-            hasLiquidTemperature = output.status.Exists(entry => entry.key == "Liquid temperature");
+            hasLiquidTemperature = output.status.Exists(entry => entry.key == "Liquid temperature" && !(entry.value is null));
             if (hasLiquidTemperature)
                 liquidTemperature = new LiquidTemperature(output);
         }
