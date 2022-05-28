@@ -95,13 +95,13 @@ namespace FanControl.Liquidctl
         {
             address = output.address;
 
-            hasPumpSpeed = output.status.Exists(entry => entry.key == "Pump duty" && !(entry.value is null));
+            hasPumpSpeed = output.status.Exists(entry => entry.key == "Pump speed" && !(entry.value is null));
             if (hasPumpSpeed)
-                pumpDuty = new PumpDuty(output);
+                pumpSpeed = new PumpSpeed(output);
 
-            hasPumpDuty = output.status.Exists(entry => entry.key == "Pump speed" && !(entry.value is null));
+            hasPumpDuty = output.status.Exists(entry => entry.key == "Pump duty" && !(entry.value is null));
             if (hasPumpDuty)
-            pumpSpeed = new PumpSpeed(output);
+                pumpDuty = new PumpDuty(output);
 
             hasLiquidTemperature = output.status.Exists(entry => entry.key == "Liquid temperature" && !(entry.value is null));
             if (hasLiquidTemperature)
