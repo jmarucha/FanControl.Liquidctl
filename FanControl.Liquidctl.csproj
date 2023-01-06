@@ -32,10 +32,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FanControl.Plugins">
-      <HintPath>..\..\..\..\Documents\FanControl\FanControl.Plugins.dll</HintPath>
+      <HintPath>..\..\..\..\..\bin\FanControl\FanControl.Plugins.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\..\..\Documents\FanControl\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\..\..\..\bin\FanControl\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
