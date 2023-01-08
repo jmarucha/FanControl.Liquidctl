@@ -27,6 +27,11 @@ namespace FanControl.Liquidctl
         {
             LiquidctlCall($"--address {address} set pump speed {(value)}");
         }
+        
+        internal static void SetFan(string address, int value)
+        {
+            LiquidctlCall($"--address {address} set fan speed {(value)}");
+        }
 
         private static Process LiquidctlCall(string arguments)
         {
