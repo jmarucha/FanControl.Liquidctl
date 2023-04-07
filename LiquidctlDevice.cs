@@ -17,7 +17,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = (float)output.status.Single(entry => entry.key == KEY).value;
+                _value = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
             }
 
             public static readonly string KEY = "Liquid temperature";
@@ -43,7 +43,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = (float)output.status.Single(entry => entry.key == KEY).value;
+                _value = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
             }
 
             public static readonly string KEY = "Pump speed";
@@ -71,7 +71,7 @@ namespace FanControl.Liquidctl
 
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                float reading = (float)output.status.Single(entry => entry.key == KEY).value;
+                float reading = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
                 //_value = reading > MAX_RPM ? 100.0f : (float)Math.Ceiling(100.0f * reading / MAX_RPM);
                 _value = RPM_LOOKUP.OrderBy(e => Math.Abs(e.Key - reading)).FirstOrDefault().Value;
             }
@@ -124,7 +124,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = (float)output.status.Single(entry => entry.key == KEY).value;
+                _value = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
             }
 
             public static readonly string KEY = "Fan speed";
@@ -153,7 +153,7 @@ namespace FanControl.Liquidctl
             // We can only estimate, as it is not provided in any output
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                float reading = (float)output.status.Single(entry => entry.key == KEY).value;
+                float reading = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
                 //_value = reading > MAX_RPM ? 100.0f : (float)Math.Ceiling(100.0f * reading / MAX_RPM);
                 _value = RPM_LOOKUP.OrderBy(e => Math.Abs(e.Key - reading)).FirstOrDefault().Value;
             }
@@ -220,22 +220,28 @@ namespace FanControl.Liquidctl
             hasLiquidTemperature = output.status.Exists(entry => entry.key == LiquidTemperature.KEY && !(entry.value is null));
             if (hasLiquidTemperature)
                 liquidTemperature = new LiquidTemperature(output);
+
+            hasSensors = hasPumpSpeed || hasPumpDuty || hasLiquidTemperature || hasFanSpeed;
         }
 
-        public readonly bool hasPumpSpeed, hasPumpDuty, hasLiquidTemperature, hasFanSpeed;
+        public readonly bool hasPumpSpeed, hasPumpDuty, hasLiquidTemperature, hasFanSpeed, hasSensors;
 
         public void UpdateFromJSON(LiquidctlStatusJSON output)
         {
-            if (hasLiquidTemperature) liquidTemperature.UpdateFromJSON(output);
-            if (hasPumpSpeed) pumpSpeed.UpdateFromJSON(output);
-            if (hasPumpDuty) pumpDuty.UpdateFromJSON(output);
-            if (hasFanSpeed) {
+            if (hasLiquidTemperature)
+                liquidTemperature.UpdateFromJSON(output);
+            if (hasPumpSpeed)
+                pumpSpeed.UpdateFromJSON(output);
+            if (hasPumpDuty)
+                pumpDuty.UpdateFromJSON(output);
+            if (hasFanSpeed)
+            {
                 fanSpeed.UpdateFromJSON(output);
                 fanControl.UpdateFromJSON(output);
             }
         }
 
-        internal IPluginLogger logger;
+        private readonly IPluginLogger logger;
         public string address;
         public LiquidTemperature liquidTemperature;
         public PumpSpeed pumpSpeed;
