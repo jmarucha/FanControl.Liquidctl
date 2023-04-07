@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using FanControl.Plugins;
 
@@ -17,7 +18,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = (float)output.status.Single(entry => entry.key == KEY).value;
+                _value = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
             }
 
             public static readonly string KEY = "Liquid temperature";
@@ -43,7 +44,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = (float)output.status.Single(entry => entry.key == KEY).value;
+                _value = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
             }
 
             public static readonly string KEY = "Pump speed";
@@ -66,28 +67,18 @@ namespace FanControl.Liquidctl
                 _address = output.address;
                 _id = $"{_address}-pumpduty";
                 _name = $"Pump Control - {output.description}";
+                _rpmLookup = BuildRpmLookup($"Plugins\\lut\\{_name}.lut", 3000); // The most widespread Asatek Pumps have a ~3000 RPM limit
                 UpdateFromJSON(output);
             }
 
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                float reading = (float)output.status.Single(entry => entry.key == KEY).value;
-                //_value = reading > MAX_RPM ? 100.0f : (float)Math.Ceiling(100.0f * reading / MAX_RPM);
-                _value = RPM_LOOKUP.OrderBy(e => Math.Abs(e.Key - reading)).FirstOrDefault().Value;
+                float reading = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
+                _value = reading < _rpmLookup.Count ? _rpmLookup[(int)reading] : 100;
             }
 
             public static readonly string KEY = "Pump speed";
-            static readonly Dictionary<int, int> RPM_LOOKUP = new Dictionary<int, int>
-            { // We can only estimate, as it is not provided in any output. Hence I applied this ugly hack
-                {1200, 40}, {1206, 41}, {1212, 42}, {1218, 43}, {1224, 44}, {1230, 45}, {1236, 46}, {1242, 47}, {1248, 48}, {1254, 49},
-                {1260, 50}, {1313, 51}, {1366, 52}, {1419, 53}, {1472, 54}, {1525, 55}, {1578, 56}, {1631, 57}, {1684, 58}, {1737, 59},
-                {1790, 60}, {1841, 61}, {1892, 62}, {1943, 63}, {1994, 64}, {2045, 65}, {2096, 66}, {2147, 67}, {2198, 68}, {2249, 69},
-                {2300, 70}, {2330, 71}, {2360, 72}, {2390, 73}, {2420, 74}, {2450, 75}, {2480, 76}, {2510, 77}, {2540, 78}, {2570, 79},
-                {2600, 80}, {2618, 81}, {2636, 82}, {2654, 83}, {2672, 84}, {2690, 85}, {2708, 86}, {2726, 87}, {2744, 88}, {2762, 89},
-                {2780, 90}, {2789, 91}, {2798, 92}, {2807, 93}, {2816, 94}, {2825, 95}, {2834, 96}, {2843, 97}, {2852, 98}, {2861, 99},
-                {MAX_RPM, 100}
-            };
-            static readonly int MAX_RPM = 2870;
+            readonly List<int> _rpmLookup = new List<int>();
 
             public string Id => _id;
             string _id;
@@ -124,7 +115,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = (float)output.status.Single(entry => entry.key == KEY).value;
+                _value = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
             }
 
             public static readonly string KEY = "Fan speed";
@@ -148,30 +139,18 @@ namespace FanControl.Liquidctl
                 _address = output.address;
                 _id = $"{output.address}-fanctrl";
                 _name = $"Fan Control - {output.description}";
+                _rpmLookup = BuildRpmLookup($"Plugins\\lut\\{_name}.lut");
                 UpdateFromJSON(output);
             }
-            // We can only estimate, as it is not provided in any output
+
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                float reading = (float)output.status.Single(entry => entry.key == KEY).value;
-                //_value = reading > MAX_RPM ? 100.0f : (float)Math.Ceiling(100.0f * reading / MAX_RPM);
-                _value = RPM_LOOKUP.OrderBy(e => Math.Abs(e.Key - reading)).FirstOrDefault().Value;
+                float reading = output.status.Single(entry => entry.key == KEY).GetValueAsFloat() ?? 0;
+                _value = reading < _rpmLookup.Count ? _rpmLookup[(int)reading] : 100;
             }
 
             public static readonly string KEY = "Fan speed";
-            static readonly Dictionary<int, int> RPM_LOOKUP = new Dictionary<int, int>
-            { // We can only estimate, as it is not provided in any output. Hence I applied this ugly hack
-                {520, 20}, {521, 21}, {522, 22}, {523, 23}, {524, 24}, {525, 25}, {526, 26}, {527, 27}, {528, 28}, {529, 29},
-                {530, 30}, {532, 31}, {534, 32}, {536, 33}, {538, 34}, {540, 35}, {542, 36}, {544, 37}, {546, 38}, {548, 39},
-                {550, 40}, {571, 41}, {592, 42}, {613, 43}, {634, 44}, {655, 45}, {676, 46}, {697, 47}, {718, 48}, {739, 49},
-                {760, 50}, {781, 51}, {802, 52}, {823, 53}, {844, 54}, {865, 55}, {886, 56}, {907, 57}, {928, 58}, {949, 59},
-                {970, 60}, {989, 61}, {1008, 62}, {1027, 63}, {1046, 64}, {1065, 65}, {1084, 66}, {1103, 67}, {1122, 68}, {1141, 69},
-                {1160, 70}, {1180, 71}, {1200, 72}, {1220, 73}, {1240, 74}, {1260, 75}, {1280, 76}, {1300, 77}, {1320, 78}, {1340, 79},
-                {1360, 80}, {1377, 81}, {1394, 82}, {1411, 83}, {1428, 84}, {1445, 85}, {1462, 86}, {1479, 87}, {1496, 88}, {1513, 89},
-                {1530, 90}, {1550, 91}, {1570, 92}, {1590, 93}, {1610, 94}, {1630, 95}, {1650, 96}, {1670, 97}, {1690, 98}, {1720, 99},
-                {MAX_RPM, 100}
-            };
-            static readonly int MAX_RPM = 1980;
+            readonly List<int> _rpmLookup = new List<int>();
 
             public string Id => _id;
             readonly string _id;
@@ -220,22 +199,28 @@ namespace FanControl.Liquidctl
             hasLiquidTemperature = output.status.Exists(entry => entry.key == LiquidTemperature.KEY && !(entry.value is null));
             if (hasLiquidTemperature)
                 liquidTemperature = new LiquidTemperature(output);
+
+            hasSensors = hasPumpSpeed || hasPumpDuty || hasLiquidTemperature || hasFanSpeed;
         }
 
-        public readonly bool hasPumpSpeed, hasPumpDuty, hasLiquidTemperature, hasFanSpeed;
+        public readonly bool hasPumpSpeed, hasPumpDuty, hasLiquidTemperature, hasFanSpeed, hasSensors;
 
         public void UpdateFromJSON(LiquidctlStatusJSON output)
         {
-            if (hasLiquidTemperature) liquidTemperature.UpdateFromJSON(output);
-            if (hasPumpSpeed) pumpSpeed.UpdateFromJSON(output);
-            if (hasPumpDuty) pumpDuty.UpdateFromJSON(output);
-            if (hasFanSpeed) {
+            if (hasLiquidTemperature)
+                liquidTemperature.UpdateFromJSON(output);
+            if (hasPumpSpeed)
+                pumpSpeed.UpdateFromJSON(output);
+            if (hasPumpDuty)
+                pumpDuty.UpdateFromJSON(output);
+            if (hasFanSpeed)
+            {
                 fanSpeed.UpdateFromJSON(output);
                 fanControl.UpdateFromJSON(output);
             }
         }
 
-        internal IPluginLogger logger;
+        private static IPluginLogger logger;
         public string address;
         public LiquidTemperature liquidTemperature;
         public PumpSpeed pumpSpeed;
@@ -250,9 +235,9 @@ namespace FanControl.Liquidctl
                 LiquidctlStatusJSON output = LiquidctlCLIWrapper.ReadStatus(address).First();
                 UpdateFromJSON(output);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException e)
             {
-                throw new Exception($"Device {address} not showing up");
+                logger.Log($"Device {address} not showing up: {e.Message}");
             }
         }
 
@@ -263,6 +248,39 @@ namespace FanControl.Liquidctl
             if (hasPumpDuty) ret += $"({pumpDuty.Value})";
             if (hasFanSpeed) ret += $", Fan @ {fanSpeed.Value} ({fanControl.Value})";
             return ret;
+        }
+
+        private static List<int> BuildRpmLookup(string lutFile, int maxRpm = 1400)
+        {
+            List<int> rpmLookup = new List<int>();
+            if (File.Exists(lutFile)) // Read lookup table to estimate fan percentage based on it
+            {
+                logger.Log($"Using LUT file {lutFile}");
+                using (StreamReader sr = File.OpenText(lutFile))
+                {
+                    string line;
+                    int lastStoredRpm = 0;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        string[] values = line.Split(';');
+                        int percentage = Convert.ToInt32(values[0]);
+                        int specifiedRpm = Convert.ToInt32(values[1]);
+                        for (int rpm = lastStoredRpm; rpm < specifiedRpm; rpm++)
+                        {
+                            rpmLookup.Add(percentage);
+                            lastStoredRpm = rpm;
+                        }
+                    }
+                }
+            }
+            else // Use linear interpolation as a rough estimate
+            {
+                for (int rpm = 0; rpm <= maxRpm; rpm++)
+                {
+                    rpmLookup.Add(100 * rpm / maxRpm);
+                }
+            }
+            return rpmLookup;
         }
     }
 }
