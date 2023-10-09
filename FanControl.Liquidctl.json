@@ -1,0 +1,14 @@
+{
+	"liquidctl": {
+		"exePath": "liquidctl.exe",
+		"match": [
+			{
+				"device": "kraken",
+				"set": [
+					"ring color breathing 05445E 189AB4 75E6DA D4F1F4",
+					"logo color spectrum-wave --speed slower"
+				]
+			}
+		]
+	}
+}
