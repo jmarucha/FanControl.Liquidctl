@@ -1,33 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Diagnostics;
-using Newtonsoft.Json;
+using FanControl.Plugins;
+using Newtonsoft.Json.Linq;
 
 namespace FanControl.Liquidctl
 {
-    internal static class LiquidctlCLIWrapper
+    internal class LiquidctlCLIWrapper
     {
-        public static string liquidctlexe = "Plugins\\liquidctl.exe"; //TODO extract path to executable to config
-        internal static void Initialize()
+        internal static IPluginLogger logger;
+        internal static Config config;
+
+        internal static void Initialize(Config pluginConfig, IPluginLogger pluginLogger)
         {
+            config = pluginConfig;
+            logger = pluginLogger;
+
             LiquidctlCall($"--json initialize all");
+
+            foreach(var match in config.liquidctl.match)
+            {
+                foreach(var cmd in match.set)
+                {
+                    LiquidctlCall($"--match {match.device} set {cmd}");
+                }
+            }
         }
         internal static List<LiquidctlStatusJSON> ReadStatus()
         {
             Process process = LiquidctlCall($"--json status");
-            return JsonConvert.DeserializeObject<List<LiquidctlStatusJSON>>(process.StandardOutput.ReadToEnd());
+            return ParseStatuses(process.StandardOutput.ReadToEnd());
         }
         internal static List<LiquidctlStatusJSON> ReadStatus(string address)
         {
             Process process = LiquidctlCall($"--json --address {address} status");
-            return JsonConvert.DeserializeObject<List<LiquidctlStatusJSON>>(process.StandardOutput.ReadToEnd());
+            return ParseStatuses(process.StandardOutput.ReadToEnd());
         }
         internal static void SetPump(string address, int value)
         {
             LiquidctlCall($"--address {address} set pump speed {(value)}");
         }
-        
+
         internal static void SetFan(string address, int value)
         {
             LiquidctlCall($"--address {address} set fan speed {(value)}");
@@ -43,9 +56,12 @@ namespace FanControl.Liquidctl
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
 
-            process.StartInfo.FileName = liquidctlexe;
+            process.StartInfo.FileName = config.liquidctl.exePath;
             process.StartInfo.Arguments = arguments;
 
+#if DEBUG
+            logger.Log($"Calling: {config.liquidctl.exePath} {arguments}");
+#endif
             process.Start();
             process.WaitForExit();
 
@@ -55,6 +71,30 @@ namespace FanControl.Liquidctl
             }
 
             return process;
+        }
+
+        private static List<LiquidctlStatusJSON> ParseStatuses(string json)
+        {
+#if DEBUG
+            logger.Log($"Got: {json}");
+#endif
+            JArray statusArray = JArray.Parse(json);
+            List<LiquidctlStatusJSON> statuses = new List<LiquidctlStatusJSON>();
+
+            foreach (JObject statusObject in statusArray)
+            {
+                try
+                {
+                    LiquidctlStatusJSON status = statusObject.ToObject<LiquidctlStatusJSON>();
+                    statuses.Add(status);
+                }
+                catch(Exception e)
+                {
+                    logger.Log($"Unable to parse {statusObject}\ne.Message");
+                }
+            }
+
+            return statuses;
         }
     }
 }

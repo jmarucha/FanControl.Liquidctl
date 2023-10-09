@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using FanControl.Plugins;
+using Newtonsoft.Json;
 
 namespace FanControl.Liquidctl
 {
@@ -8,6 +9,7 @@ namespace FanControl.Liquidctl
     {
         internal List<LiquidctlDevice> devices = new List<LiquidctlDevice>();
         internal IPluginLogger logger;
+        internal Config config;
 
         public string Name => "LiquidctlPlugin";
 
@@ -18,16 +20,22 @@ namespace FanControl.Liquidctl
 
         public void Initialize()
         {
+            using (StreamReader tr = new StreamReader(@"Plugins\FanControl.Liquidctl.json"))
+            {
+                config = JsonConvert.DeserializeObject<Config>(tr.ReadToEnd());
+            }
 
-            LiquidctlCLIWrapper.Initialize();
+            LiquidctlCLIWrapper.Initialize(config, logger);
         }
 
         public void Load(IPluginSensorsContainer _container)
         {
-            List<LiquidctlStatusJSON> input = LiquidctlCLIWrapper.ReadStatus();
-            foreach (LiquidctlStatusJSON liquidctl in input)
+            logger.Log($"Loading: {Name}");
+
+            List<LiquidctlStatusJSON> statusList = LiquidctlCLIWrapper.ReadStatus();
+            foreach (LiquidctlStatusJSON status in statusList)
             {
-                LiquidctlDevice device = new LiquidctlDevice(liquidctl, logger);
+                LiquidctlDevice device = new LiquidctlDevice(status, logger);
                 logger.Log(device.GetDeviceInfo());
                 if (device.hasPumpSpeed)
                     _container.FanSensors.Add(device.pumpSpeed);
