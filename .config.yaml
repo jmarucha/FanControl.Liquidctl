@@ -1,0 +1,5 @@
+﻿app:
+  liquidCtl:
+    execPath: "Plugins\\liquidctl.exe"
+  debug: true
+        

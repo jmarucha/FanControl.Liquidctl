@@ -8,7 +8,7 @@ namespace FanControl.Liquidctl;
 
 internal static class LiquidctlCLIWrapper
 {
-    private const string LiquidCtlExe = "Plugins\\liquidctl.exe"; //TODO extract path to executable to config
+    public static string LiquidCtlExe { get; internal set; } 
 
     internal static IEnumerable<LiquidctlDeviceJSON> Initialize()
     {
