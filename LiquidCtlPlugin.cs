@@ -32,7 +32,7 @@ public class LiquidCtlPlugin : IPlugin2
     {
         try
         {
-            ConfigManager.init();
+            ConfigManager.Init();
             LiquidctlCLIWrapper.LiquidCtlExe = ConfigManager.GetConfigValue("app.liquidCtl.execPath");
 
             _initializedDevices.AddRange(LiquidctlCLIWrapper.Initialize());

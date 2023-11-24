@@ -14,7 +14,7 @@ public static class ConfigManager
     internal static IPluginLogger Logger { get; set; }
  
 
-    public static void init()
+    public static void Init()
     {
         var builder = new ConfigurationBuilder()
             .SetBasePath(Environment.CurrentDirectory)
