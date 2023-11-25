@@ -11,7 +11,7 @@ namespace FanControl.Liquidctl
 
         public long? release_number { get; set; }
 
-        public int port { get; set; }
+        public string port { get; set; }
 
         public string serial_number { get; set; }
 

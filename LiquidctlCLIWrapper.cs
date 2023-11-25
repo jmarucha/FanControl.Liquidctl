@@ -6,33 +6,34 @@ using Newtonsoft.Json;
 
 namespace FanControl.Liquidctl;
 
+internal record FailedDeviceInfo(LiquidctlDeviceJSON Device, string FailureMessage);
+
 internal static class LiquidctlCLIWrapper
 {
-    public static string LiquidCtlExe { get; internal set; } 
+    public static string LiquidCtlExe { get; internal set; }
+    
+    public static List<FailedDeviceInfo> FailedToInitDevices { get; private set; }
 
     internal static IEnumerable<LiquidctlDeviceJSON> Initialize()
     {
         var deviceDescriptors = ScanDevices();
         var nonInitializedDevices = new List<LiquidctlDeviceJSON>();
+        FailedToInitDevices = new List<FailedDeviceInfo>();
         
         foreach (var deviceDesc in deviceDescriptors)
         {
             try
             {
-                if (deviceDesc.serial_number is not "")
-                {
-                    CallLiquidControl($"--serial {deviceDesc.serial_number} initialize" );    
-                }
-                else
-                {
-                    CallLiquidControl($"-m {deviceDesc.description} initialize" );
-                }
-                
+                CallLiquidControl(deviceDesc.serial_number is not ""
+                    ? $"--json --serial {deviceDesc.serial_number} initialize"
+                    : $"--json -m \"{deviceDesc.description}\" initialize");
             }
             catch (Exception e)
             {
-                // Ignore exceptions during initialize and add  non initialized devices.
+                // Ignore exceptions during initialize and add to  non initialized devices.
                 nonInitializedDevices.Add(deviceDesc);
+                var failedDeviceInfo = new FailedDeviceInfo(deviceDesc, e.Message);
+                FailedToInitDevices.Add(failedDeviceInfo);
             }
         }
         // Filter out non initialized devices
@@ -90,12 +91,13 @@ internal static class LiquidctlCLIWrapper
         {
             process.Start();
         }
-        catch (Exception e)
+        catch (Win32Exception e)
         {
-          if(e is Win32Exception )
-          {
-              throw new ApplicationException($"Failed to locate LiquidCtl executable: @ {LiquidCtlExe}", e);
-          }   
+          throw new ApplicationException($"Failed to locate LiquidCtl executable: @ {LiquidCtlExe}", e);
+        }
+        catch(InvalidOperationException e)
+        {
+            throw new ApplicationException($"LiquidCtl executable path not set, Please check your configuration!", e);
         }
 
         process.WaitForExit();

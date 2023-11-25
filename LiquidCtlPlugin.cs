@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using FanControl.Plugins;
+using Microsoft.Extensions.Configuration;
 
 namespace FanControl.Liquidctl;
 
@@ -24,6 +25,14 @@ public class LiquidCtlPlugin : IPlugin2
         _dialog = dialog;
         _logger = pluginLogger;
         _logger.Log("Liquid Control Plugin active!");
+        ConfigManager.FileLoadExceptionHandler = (
+            (context) =>
+            {
+                _logger.Log($"Unrecoverable Error while loading config file: {context.Exception.Message}");
+                var task = _dialog.ShowMessageDialog(
+                    $"Unable loading config file $ {context.Exception.Message}. Please ensure that the file is in the location!");
+                if (!task.IsCompleted) task.Wait();
+            });
     }
 
     public string Name => "LiquidCtlPlugin";
@@ -37,6 +46,18 @@ public class LiquidCtlPlugin : IPlugin2
 
             _initializedDevices.AddRange(LiquidctlCLIWrapper.Initialize());
 
+            if (LiquidctlCLIWrapper.FailedToInitDevices.Count != 0)
+            {
+                _logger.Log(
+                    $"Failed to initialize devices: \n{string.Join('\n', LiquidctlCLIWrapper.FailedToInitDevices.Select((info, i) => $"{i+1}. {info.Device.description} \nCause: {info.FailureMessage}"))}");
+            }
+
+            if (_initializedDevices.Count == 0)
+            {
+                _logger.Log("No initialized device discovered!");
+                return;
+            }
+
             var deviceNames = _initializedDevices
                 .Select(json => json.description)
                 .Order(StringComparer.Create(CultureInfo.CurrentCulture, CompareOptions.StringSort))
@@ -46,7 +67,7 @@ public class LiquidCtlPlugin : IPlugin2
         }
         catch (Exception e)
         {
-           HandleErrors(e);
+            HandleErrors(e);
         }
     }
 
@@ -106,7 +127,6 @@ public class LiquidCtlPlugin : IPlugin2
             {
                 HandleErrors(e);
             }
-            
         }
     }
 
@@ -115,22 +135,23 @@ public class LiquidCtlPlugin : IPlugin2
         var debug = ConfigManager.GetConfigBool("app.debug");
         if (e is ApplicationException || e.InnerException is ApplicationException)
         {
-            var message = debug ? $"{e.Message}\n{(e.InnerException?.Message ?? "")}":
-                $"{e.Message}\n{e.StackTrace}\n{e.InnerException?.Message ?? ""}";
+            var message = debug
+                ? $"{e.Message}\n{(e.InnerException?.Message ?? "")}"
+                : $"{e.Message}\n{e.StackTrace}\n{e.InnerException?.Message ?? ""}";
             _logger.Log($"Error occured at Liquid Control Plugin: {message}");
         }
         else
         {
             _logger.Log(debug
                 ? $"Error occured at Liquid Control Plugin: {e.Message}\n{e.StackTrace}"
-                : $"Error occured at Liquid Control Plugin: {e.Message}");    
+                : $"Error occured at Liquid Control Plugin: {e.Message}");
         }
-            
+
         if (!debug) return;
         var prompt = _dialog.ShowMessageDialog($"The Liquid Control plugin may not function correctly!\n{e.Message}");
         try
         {
-            prompt.Wait();
+            if (!prompt.IsCompleted) prompt.Wait();
         }
         catch (ObjectDisposedException exception)
         {
@@ -142,6 +163,5 @@ public class LiquidCtlPlugin : IPlugin2
                 .Aggregate((i, j) => $"{i}\n{j}");
             _logger.Log($"Errors occured at Liquid Control Plugin:\n {messages}");
         }
-
     }
 }
