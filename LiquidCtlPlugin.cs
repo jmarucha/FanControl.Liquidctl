@@ -70,20 +70,19 @@ public class LiquidCtlPlugin : IPlugin2
     {
         try
         {
-            var statusDescriptors = LiquidctlCLIWrapper.ReadStatus();
-            foreach (var device in from statusDescriptor in statusDescriptors
-                     where _initializedDeviceDescriptors.Exists(deviceDesc =>
-                         deviceDesc.address.Equals(statusDescriptor.address) &&
-                         deviceDesc.description.Equals(statusDescriptor.description))
-                     select new LiquidctlDevice(statusDescriptor, _logger))
+            foreach (var device in _initializedDeviceDescriptors
+                         .Select(desc =>
+                             desc.serial_number is not null
+                                 ? LiquidctlCLIWrapper.ReadStatus(Option.SerialId, desc.serial_number)
+                                 : desc.address is not null
+                                     ? LiquidctlCLIWrapper.ReadStatus(Option.Address, desc.address)
+                                     : LiquidctlCLIWrapper.ReadStatus(Option.Description, desc.description))
+                         .Select(json => new LiquidctlDevice(json, _logger)))
             {
                 _logger.Log(device.GetDeviceInfo());
-                if (device.HasPumpSpeed)
-                    container.FanSensors.Add(device.PumpSpeedSensor);
-                if (device.HasPumpDuty)
-                    container.ControlSensors.Add(device.PumpDutyController);
-                if (device.HasLiquidTemperature)
-                    container.TempSensors.Add(device.LiquidTemperatureSensor);
+                if (device.HasPumpSpeed) container.FanSensors.Add(device.PumpSpeedSensor);
+                if (device.HasPumpDuty) container.ControlSensors.Add(device.PumpDutyController);
+                if (device.HasLiquidTemperature) container.TempSensors.Add(device.LiquidTemperatureSensor);
                 if (device.HasFanSpeed)
                 {
                     container.FanSensors.AddRange(device.FanSpeedSensors);

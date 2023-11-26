@@ -109,7 +109,7 @@ public class LiquidctlDevice
         if (HasLiquidTemperature) ret += $", Liquid @ {LiquidTemperatureSensor.Value}";
         if (HasPumpSpeed) ret += $", Pump @ {PumpSpeedSensor.Value}";
         if (HasPumpDuty) ret += $"({PumpDutyController.Value})";
-        if (HasFanSpeed) ret += $", Fans @ {GetFanStatuses()}";
+        if (HasFanSpeed) ret += $",\n Fans @ {GetFanStatuses()}";
         return ret;
     }
 
@@ -275,7 +275,7 @@ public class LiquidctlDevice
         {
             _key = channel != -1 ? $"Fan {channel} speed" : "Fan speed";
             Id = $"{output.address}-fanRPM{channel}";
-            Name = $"Fan {channel}- {output.description}";
+            Name = $"Fan {channel} - {output.description}";
             LoadFromStatusDescriptor(output);
         }
 

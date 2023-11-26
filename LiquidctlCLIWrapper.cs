@@ -46,6 +46,14 @@ internal static class LiquidctlCLIWrapper
         return JsonConvert.DeserializeObject<List<LiquidctlDeviceJSON>>(process.StandardOutput.ReadToEnd());
     }
 
+    internal static LiquidctlStatusJSON ReadStatus(Option option, string value)
+    {
+        var valueStr = option.IsNumeric() ? $"{value}" : $"\"{value}\"";
+        var process = CallLiquidControl($"--json {option.GetSwitch()} {valueStr} status");
+        var status = JsonConvert.DeserializeObject<List<LiquidctlStatusJSON>>(process.StandardOutput.ReadToEnd());
+        return status?.Count > 0 ? status[0] : null;
+    }
+
     internal static IEnumerable<LiquidctlStatusJSON> ReadStatus()
     {
         var process = CallLiquidControl("--json status");
