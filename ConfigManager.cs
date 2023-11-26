@@ -8,18 +8,17 @@ using YamlDotNet.RepresentationModel;
 namespace FanControl.Liquidctl;
 
 /// <summary>
-/// A configuration manager with yaml config file support. The manager expects to read ".config.yaml" file from the
-/// current execution directory. If it does not find it, it creates one by default.
+///     A configuration manager with yaml config file support. The manager expects to read ".config.yaml" file from the
+///     current execution directory. If it does not find it, it creates one by default.
 /// </summary>
 public static class ConfigManager
 {
+    private const string YamlFileName = "config.yaml";
     private static IConfigurationRoot _configs;
 
-    private const string YamlFileName = "config.yaml";
-
     /// <summary>
-    /// Set this property  if you want to handle any exception that occurs when the config file is read.
-    /// Otherwise the thrown exception should be handled in the calling code.
+    ///     Set this property  if you want to handle any exception that occurs when the config file is read.
+    ///     Otherwise the thrown exception should be handled in the calling code.
     /// </summary>
     internal static Action<FileLoadExceptionContext> FileLoadExceptionHandler { get; set; }
 
@@ -46,8 +45,9 @@ public static class ConfigManager
     }
 
     /// <summary>
-    /// Initializes the Config Manager and make is ready for use. This method should be called only once in a programs lifecycle.
-    /// It will automatically reload the configuration if the underlying config file is edited 
+    ///     Initializes the Config Manager and make is ready for use. This method should be called only once in a programs
+    ///     lifecycle.
+    ///     It will automatically reload the configuration if the underlying config file is edited
     /// </summary>
     public static void Init()
     {
@@ -70,25 +70,25 @@ public static class ConfigManager
     }
 
     /// <summary>
-    /// Gets the configuration property for the key.
+    ///     Gets the configuration property for the key.
     /// </summary>
     /// <param name="key">The key can be in the format "x.y.z" for nested properties</param>
     /// <returns>The string value stored else empty string</returns>
     public static string GetConfigValue(string key)
     {
-        var envKey = key.Replace('.','_').ToUpper();
+        var envKey = key.Replace('.', '_').ToUpper();
         // If there is an environment variable for the key set then return it
         var envVarValue = Environment.GetEnvironmentVariable(envKey);
         if (envVarValue != null)
             return envVarValue;
 
         _configs?.Reload();
-        var yamlPath = key.Replace('.', ':'); 
+        var yamlPath = key.Replace('.', ':');
         return _configs?.GetSection(yamlPath).Value;
     }
 
     /// <summary>
-    ///  Gets the configuration property for the key.
+    ///     Gets the configuration property for the key.
     /// </summary>
     /// <param name="key">The key can be in the format "x.y.z" for nested properties</param>
     /// <returns>The boolean value stored else a false if not parseable</returns>
@@ -99,7 +99,7 @@ public static class ConfigManager
     }
 
     /// <summary>
-    /// Gets the configuration property for the key. 
+    ///     Gets the configuration property for the key.
     /// </summary>
     /// <param name="key">The key can be in the format "x.y.z" for nested properties</param>
     /// <returns>The integer value stored else 0 if not parseable</returns>
@@ -110,7 +110,7 @@ public static class ConfigManager
     }
 
     /// <summary>
-    /// Gets the configuration property for the key.
+    ///     Gets the configuration property for the key.
     /// </summary>
     /// <param name="key">The key can be in the format "x.y.z" for nested properties</param>
     /// <param name="separator">The delimiter to use when parsing the string value</param>
@@ -122,7 +122,7 @@ public static class ConfigManager
     }
 
     /// <summary>
-    /// Gets the configuration property for the key.
+    ///     Gets the configuration property for the key.
     /// </summary>
     /// <param name="key">The key can be in the format "x.y.z" for nested properties</param>
     /// <returns>The float value stored else 0.0f if not parseable</returns>

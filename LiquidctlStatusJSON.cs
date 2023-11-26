@@ -14,7 +14,7 @@ public class LiquidctlStatusJSON
     public class StatusRecord
     {
         public string key { get; set; }
-        public float? value { get; set; }
+        public string? value { get; set; }
         public string unit { get; set; }
     }
 }

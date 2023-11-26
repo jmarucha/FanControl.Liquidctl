@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Threading.Tasks;
 using FanControl.Plugins;
-using Microsoft.Extensions.Configuration;
 
 namespace FanControl.Liquidctl;
 
@@ -13,26 +10,25 @@ public class LiquidCtlPlugin : IPlugin2
 {
     private readonly List<LiquidctlDevice> _devices = new();
 
+    private readonly IPluginDialog _dialog;
+
     private readonly List<LiquidctlDeviceJSON>
-        _initializedDevices = new(); //Added to filter devices that are not initialized correctly
+        _initializedDeviceDescriptors = new(); //Contains only initialized devices correctly
 
     private readonly IPluginLogger _logger;
-
-    private readonly IPluginDialog _dialog;
 
     public LiquidCtlPlugin(IPluginLogger pluginLogger, IPluginDialog dialog)
     {
         _dialog = dialog;
         _logger = pluginLogger;
         _logger.Log("Liquid Control Plugin active!");
-        ConfigManager.FileLoadExceptionHandler = (
-            (context) =>
-            {
-                _logger.Log($"Unrecoverable Error while loading config file: {context.Exception.Message}");
-                var task = _dialog.ShowMessageDialog(
-                    $"Unable loading config file $ {context.Exception.Message}. Please ensure that the file is in the location!");
-                if (!task.IsCompleted) task.Wait();
-            });
+        ConfigManager.FileLoadExceptionHandler = context =>
+        {
+            _logger.Log($"Unrecoverable Error while loading config file: {context.Exception.Message}");
+            var task = _dialog.ShowMessageDialog(
+                $"Unable loading config file $ {context.Exception.Message}. Please ensure that the file is in the location!");
+            if (!task.IsCompleted) task.Wait();
+        };
     }
 
     public string Name => "LiquidCtlPlugin";
@@ -44,21 +40,19 @@ public class LiquidCtlPlugin : IPlugin2
             ConfigManager.Init();
             LiquidctlCLIWrapper.LiquidCtlExe = ConfigManager.GetConfigValue("app.liquidCtl.execPath");
 
-            _initializedDevices.AddRange(LiquidctlCLIWrapper.Initialize());
+            _initializedDeviceDescriptors.AddRange(LiquidctlCLIWrapper.Initialize());
 
             if (LiquidctlCLIWrapper.FailedToInitDevices.Count != 0)
-            {
                 _logger.Log(
-                    $"Failed to initialize devices: \n{string.Join('\n', LiquidctlCLIWrapper.FailedToInitDevices.Select((info, i) => $"{i+1}. {info.Device.description} \nCause: {info.FailureMessage}"))}");
-            }
+                    $"Failed to initialize devices: \n{string.Join('\n', LiquidctlCLIWrapper.FailedToInitDevices.Select((info, i) => $"{i + 1}. {info.Device.description} \nCause: {info.FailureMessage}"))}");
 
-            if (_initializedDevices.Count == 0)
+            if (_initializedDeviceDescriptors.Count == 0)
             {
                 _logger.Log("No initialized device discovered!");
                 return;
             }
 
-            var deviceNames = _initializedDevices
+            var deviceNames = _initializedDeviceDescriptors
                 .Select(json => json.description)
                 .Order(StringComparer.Create(CultureInfo.CurrentCulture, CompareOptions.StringSort))
                 .Select(name => $"=> {name}")
@@ -71,10 +65,6 @@ public class LiquidCtlPlugin : IPlugin2
         }
     }
 
-    public bool IsInited()
-    {
-        return _initializedDevices.Count != 0;
-    }
 
     public void Load(IPluginSensorsContainer container)
     {
@@ -82,18 +72,18 @@ public class LiquidCtlPlugin : IPlugin2
         {
             var statusDescriptors = LiquidctlCLIWrapper.ReadStatus();
             foreach (var device in from statusDescriptor in statusDescriptors
-                     where _initializedDevices.Exists(deviceDesc =>
+                     where _initializedDeviceDescriptors.Exists(deviceDesc =>
                          deviceDesc.address.Equals(statusDescriptor.address) &&
                          deviceDesc.description.Equals(statusDescriptor.description))
                      select new LiquidctlDevice(statusDescriptor, _logger))
             {
                 _logger.Log(device.GetDeviceInfo());
                 if (device.HasPumpSpeed)
-                    container.FanSensors.Add(device.pumpSpeed);
+                    container.FanSensors.Add(device.PumpSpeedSensor);
                 if (device.HasPumpDuty)
-                    container.ControlSensors.Add(device.pumpDuty);
+                    container.ControlSensors.Add(device.PumpDutyController);
                 if (device.HasLiquidTemperature)
-                    container.TempSensors.Add(device.liquidTemperature);
+                    container.TempSensors.Add(device.LiquidTemperatureSensor);
                 if (device.HasFanSpeed)
                 {
                     container.FanSensors.AddRange(device.FanSpeedSensors);
@@ -111,14 +101,13 @@ public class LiquidCtlPlugin : IPlugin2
 
     public void Close()
     {
-        _initializedDevices.Clear();
+        _initializedDeviceDescriptors.Clear();
         _devices.Clear();
     }
 
     public void Update()
     {
         foreach (var device in _devices)
-        {
             try
             {
                 device.LoadJson();
@@ -127,7 +116,24 @@ public class LiquidCtlPlugin : IPlugin2
             {
                 HandleErrors(e);
             }
-        }
+    }
+
+    /// <summary>
+    ///     Checks if there are correctly initialized devices that the plugin can get data from.
+    /// </summary>
+    /// <returns>True  if there are any</returns>
+    public bool HasInitialized()
+    {
+        return _initializedDeviceDescriptors.Count != 0;
+    }
+
+    /// <summary>
+    ///     Count the number of devices enumerated and found properly intialized
+    /// </summary>
+    /// <returns>The count</returns>
+    public int EnumeratedDeviceCount()
+    {
+        return _initializedDeviceDescriptors.Count;
     }
 
     private void HandleErrors(Exception e)
@@ -136,7 +142,7 @@ public class LiquidCtlPlugin : IPlugin2
         if (e is ApplicationException || e.InnerException is ApplicationException)
         {
             var message = debug
-                ? $"{e.Message}\n{(e.InnerException?.Message ?? "")}"
+                ? $"{e.Message}\n{e.InnerException?.Message ?? ""}"
                 : $"{e.Message}\n{e.StackTrace}\n{e.InnerException?.Message ?? ""}";
             _logger.Log($"Error occured at Liquid Control Plugin: {message}");
         }

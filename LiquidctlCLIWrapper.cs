@@ -11,7 +11,7 @@ internal record FailedDeviceInfo(LiquidctlDeviceJSON Device, string FailureMessa
 internal static class LiquidctlCLIWrapper
 {
     public static string LiquidCtlExe { get; internal set; }
-    
+
     public static List<FailedDeviceInfo> FailedToInitDevices { get; private set; }
 
     internal static IEnumerable<LiquidctlDeviceJSON> Initialize()
@@ -19,9 +19,8 @@ internal static class LiquidctlCLIWrapper
         var deviceDescriptors = ScanDevices();
         var nonInitializedDevices = new List<LiquidctlDeviceJSON>();
         FailedToInitDevices = new List<FailedDeviceInfo>();
-        
+
         foreach (var deviceDesc in deviceDescriptors)
-        {
             try
             {
                 CallLiquidControl(deviceDesc.serial_number is not ""
@@ -35,7 +34,7 @@ internal static class LiquidctlCLIWrapper
                 var failedDeviceInfo = new FailedDeviceInfo(deviceDesc, e.Message);
                 FailedToInitDevices.Add(failedDeviceInfo);
             }
-        }
+
         // Filter out non initialized devices
         deviceDescriptors.RemoveAll(deviceDesc => nonInitializedDevices.Contains(deviceDesc));
         return deviceDescriptors;
@@ -93,11 +92,11 @@ internal static class LiquidctlCLIWrapper
         }
         catch (Win32Exception e)
         {
-          throw new ApplicationException($"Failed to locate LiquidCtl executable: @ {LiquidCtlExe}", e);
+            throw new ApplicationException($"Failed to locate LiquidCtl executable: @ {LiquidCtlExe}", e);
         }
-        catch(InvalidOperationException e)
+        catch (InvalidOperationException e)
         {
-            throw new ApplicationException($"LiquidCtl executable path not set, Please check your configuration!", e);
+            throw new ApplicationException("LiquidCtl executable path not set, Please check your configuration!", e);
         }
 
         process.WaitForExit();
