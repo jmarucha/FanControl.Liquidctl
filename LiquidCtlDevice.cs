@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using FanControl.Plugins;
 
 namespace FanControl.Liquidctl;
 
-public class LiquidctlDevice
+public class LiquidCtlDevice
 {
     private readonly string _address;
 
@@ -18,7 +17,7 @@ public class LiquidctlDevice
     public readonly PumpDuty PumpDutyController;
     public readonly PumpSpeed PumpSpeedSensor;
 
-    public LiquidctlDevice(LiquidctlStatusJSON output, IPluginLogger pluginLogger)
+    public LiquidCtlDevice(LiquidCtlStatusJson output, IPluginLogger pluginLogger)
     {
         _logger = pluginLogger;
         _address = output.address;
@@ -62,17 +61,17 @@ public class LiquidctlDevice
         try
         {
             var val = key.Split(" ")
-                .Single(s => int.TryParse(s, out var result));
-            return (val?.Length > 0) ? int.Parse(val) : -1;
+                .Single(s => int.TryParse(s, out _));
+            return (val.Length > 0) ? int.Parse(val) : -1;
         }
-        catch (InvalidOperationException e)
+        catch (InvalidOperationException)
         {
             _logger.Log($"{key} does not contain any index identifier. Setting for only one {type} channel");
             return -1;
         }
     }
 
-    private void UpdateFromStatusDescriptor(LiquidctlStatusJSON output)
+    private void UpdateFromStatusDescriptor(LiquidCtlStatusJson output)
     {
         if (HasLiquidTemperature) LiquidTemperatureSensor.LoadFromStatusDescriptor(output);
         if (HasPumpSpeed) PumpSpeedSensor.LoadFromStatusDescriptor(output);
@@ -118,7 +117,7 @@ public class LiquidctlDevice
         internal const string Key = "Liquid temperature";
         private float _value;
 
-        public LiquidTemperature(LiquidctlStatusJSON output)
+        public LiquidTemperature(LiquidCtlStatusJson output)
         {
             Id = $"{output.address}-liqtmp";
             Name = $"Liquid Temp. - {output.description}";
@@ -135,7 +134,7 @@ public class LiquidctlDevice
         {
         } // plugin updates sensors
 
-        internal void LoadFromStatusDescriptor(LiquidctlStatusJSON output)
+        internal void LoadFromStatusDescriptor(LiquidCtlStatusJson output)
         {
             var value = output.status.Single(entry => entry.key == Key).value;
             if (value == null) return;
@@ -154,7 +153,7 @@ public class LiquidctlDevice
         internal const string Key = "Pump speed";
         private float _value;
 
-        public PumpSpeed(LiquidctlStatusJSON output)
+        public PumpSpeed(LiquidCtlStatusJson output)
         {
             Id = $"{output.address}-pumprpm";
             Name = $"Pump - {output.description}";
@@ -171,7 +170,7 @@ public class LiquidctlDevice
         {
         } // plugin updates sensors
 
-        internal void LoadFromStatusDescriptor(LiquidctlStatusJSON output)
+        internal void LoadFromStatusDescriptor(LiquidCtlStatusJson output)
         {
             var value = output.status.Single(entry => entry.key == Key).value;
             if (float.TryParse(value, out var result))
@@ -217,7 +216,7 @@ public class LiquidctlDevice
         private readonly string _address;
         private float _value;
 
-        public PumpDuty(LiquidctlStatusJSON output)
+        public PumpDuty(LiquidCtlStatusJson output)
         {
             _address = output.address;
             Id = $"{_address}-pumpduty";
@@ -245,7 +244,7 @@ public class LiquidctlDevice
         {
         } // plugin updates sensors
 
-        internal void LoadFromStatusDescriptor(LiquidctlStatusJSON output)
+        internal void LoadFromStatusDescriptor(LiquidCtlStatusJson output)
         {
             var value = output.status.Single(entry => entry.key == Key).value;
             if (value == null) return;
@@ -271,7 +270,7 @@ public class LiquidctlDevice
 
         private float _value;
 
-        public FanSpeed(LiquidctlStatusJSON output, int channel)
+        public FanSpeed(LiquidCtlStatusJson output, int channel)
         {
             _key = channel != -1 ? $"Fan {channel} speed" : "Fan speed";
             Id = $"{output.address}-fanRPM{channel}";
@@ -291,7 +290,7 @@ public class LiquidctlDevice
         {
         } // plugin updates sensors
 
-        internal void LoadFromStatusDescriptor(LiquidctlStatusJSON output)
+        internal void LoadFromStatusDescriptor(LiquidCtlStatusJson output)
         {
             if (output.status.Count == 0)
             {
@@ -304,7 +303,7 @@ public class LiquidctlDevice
                 var statusRecord = output.status.Single(entry => entry.key == _key);
                 var value = statusRecord.value;
                 var unit = statusRecord.unit;
-                if (unit.Length != 0)
+                if (unit is not null && unit.Length != 0)
                     Unit = unit;
                 if (float.TryParse(value, out var result))
                     _value = result;
@@ -363,7 +362,7 @@ public class LiquidctlDevice
         private readonly string _key;
         private float _value;
 
-        public FanControl(LiquidctlStatusJSON output, int channel)
+        public FanControl(LiquidCtlStatusJson output, int channel)
         {
             _channel = channel;
             _value = 50.0f; // default value for fan control is 50% duty cycle. This is the same as the default value for the fan speed. 
@@ -402,7 +401,7 @@ public class LiquidctlDevice
         {
         } // plugin updates sensors
 
-        internal void LoadFromStatusDescriptor(LiquidctlStatusJSON output)
+        internal void LoadFromStatusDescriptor(LiquidCtlStatusJson output)
         {
             try
             {
@@ -410,7 +409,7 @@ public class LiquidctlDevice
 
                 var value = statusRecord.value;
                 var unit = statusRecord.unit;
-                if (unit.Length != 0)
+                if (unit is not null && unit.Length != 0)
                     Unit = unit;
                 if (value == null) return;
                 if (float.TryParse(value, out var result))

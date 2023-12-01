@@ -8,7 +8,7 @@ namespace FanControl.Liquidctl;
 
 public class LiquidCtlPlugin : IPlugin2
 {
-    private readonly List<LiquidctlDevice> _devices = new();
+    private readonly List<LiquidCtlDevice> _devices = new();
 
     private readonly IPluginDialog _dialog;
 
@@ -77,7 +77,7 @@ public class LiquidCtlPlugin : IPlugin2
                                  : desc.address is not null
                                      ? LiquidctlCLIWrapper.ReadStatus(Option.Address, desc.address)
                                      : LiquidctlCLIWrapper.ReadStatus(Option.Description, desc.description))
-                         .Select(json => new LiquidctlDevice(json, _logger)))
+                         .Select(json => new LiquidCtlDevice(json, _logger)))
             {
                 _logger.Log(device.GetDeviceInfo());
                 if (device.HasPumpSpeed) container.FanSensors.Add(device.PumpSpeedSensor);

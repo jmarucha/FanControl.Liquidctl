@@ -46,24 +46,24 @@ internal static class LiquidctlCLIWrapper
         return JsonConvert.DeserializeObject<List<LiquidctlDeviceJSON>>(process.StandardOutput.ReadToEnd());
     }
 
-    internal static LiquidctlStatusJSON ReadStatus(Option option, string value)
+    internal static LiquidCtlStatusJson ReadStatus(Option option, string value)
     {
         var valueStr = option.IsNumeric() ? $"{value}" : $"\"{value}\"";
         var process = CallLiquidControl($"--json {option.GetSwitch()} {valueStr} status");
-        var status = JsonConvert.DeserializeObject<List<LiquidctlStatusJSON>>(process.StandardOutput.ReadToEnd());
+        var status = JsonConvert.DeserializeObject<List<LiquidCtlStatusJson>>(process.StandardOutput.ReadToEnd());
         return status?.Count > 0 ? status[0] : null;
     }
 
-    internal static IEnumerable<LiquidctlStatusJSON> ReadStatus()
+    internal static IEnumerable<LiquidCtlStatusJson> ReadStatus()
     {
         var process = CallLiquidControl("--json status");
-        return JsonConvert.DeserializeObject<List<LiquidctlStatusJSON>>(process.StandardOutput.ReadToEnd());
+        return JsonConvert.DeserializeObject<List<LiquidCtlStatusJson>>(process.StandardOutput.ReadToEnd());
     }
 
-    internal static IEnumerable<LiquidctlStatusJSON> ReadStatus(string address)
+    internal static IEnumerable<LiquidCtlStatusJson> ReadStatus(string address)
     {
         var process = CallLiquidControl($"--json --address {address} status");
-        return JsonConvert.DeserializeObject<List<LiquidctlStatusJSON>>(process.StandardOutput.ReadToEnd());
+        return JsonConvert.DeserializeObject<List<LiquidCtlStatusJson>>(process.StandardOutput.ReadToEnd());
     }
 
     internal static void SetPump(string address, int value)
