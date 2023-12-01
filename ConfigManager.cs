@@ -25,13 +25,18 @@ public static class ConfigManager
 
     private static void CreateYamlIfNotPresent()
     {
-        if (File.Exists($"{Environment.CurrentDirectory}\\{YamlFileName}")) return;
+        if (File.Exists($@"{Environment.CurrentDirectory}\{YamlFileName}")) return;
         var appMapping = new YamlMappingNode
         {
             {
                 "liquidCtl",
-                // ReSharper disable once StringLiteralTypo
-                new YamlMappingNode { { "execPath", $"{Environment.CurrentDirectory}\\liquidctl.exe" } }
+                File.Exists(Path.Combine(Environment.CurrentDirectory, "liquidCtl.exe"))
+                    ? new YamlMappingNode
+                        { { "execPath", Path.Combine(Environment.CurrentDirectory, "liquidCtl.exe") } }
+                    : File.Exists(Path.Combine(Environment.CurrentDirectory, "liquidCtl", "liquidCtl.exe"))
+                        ? new YamlMappingNode
+                            { { "execPath", Path.Combine(Environment.CurrentDirectory, "liquidCtl", "liquidCtl.exe") } }
+                        : new YamlMappingNode { { "execPath", Path.Combine(".", "Plugins", "liquidCtl.exe") } }
             },
             { "debug", "true" }
         };
@@ -42,6 +47,7 @@ public static class ConfigManager
         using var writer = new StreamWriter($"{Environment.CurrentDirectory}\\{YamlFileName}");
         writer.AutoFlush = true;
         yaml.Save(writer);
+        return;
     }
 
     /// <summary>
