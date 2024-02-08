@@ -4,6 +4,8 @@
         <OutputType>Library</OutputType>
         <LangVersion>latest</LangVersion>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
         <DebugType>none</DebugType>
@@ -14,12 +16,16 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Castle.Core" Version="5.1.1"/>
-        <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Configuration.Yaml" Version="2.0.0-preview2"/>
-        <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Yaml" Version="2.0.0-preview2" />
+        <PackageReference Include="Microsoft.Extensions.FileProviders.Abstractions" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
+        <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 </Project>

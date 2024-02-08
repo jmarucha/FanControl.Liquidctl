@@ -47,7 +47,6 @@ public static class ConfigManager
         using var writer = new StreamWriter($"{Environment.CurrentDirectory}\\{YamlFileName}");
         writer.AutoFlush = true;
         yaml.Save(writer);
-        return;
     }
 
     /// <summary>
